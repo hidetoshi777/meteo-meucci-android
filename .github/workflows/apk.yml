@@ -44,6 +44,14 @@ jobs:
           name: meteo-meucci
           path: meteo-meucci.apk
 
+      - name: Anteprime del widget
+        run: gradle testDebugUnitTest --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: anteprime
+          path: app/build/anteprime/
+
       - name: Pubblica la versione
         if: github.ref_type == 'tag'
         env:

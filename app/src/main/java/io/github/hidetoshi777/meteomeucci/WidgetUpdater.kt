@@ -32,30 +32,8 @@ object WidgetUpdater {
         var hDp = opzioni.getInt(if (verticale) AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT else AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
         if (wDp <= 0) wDp = 250
         if (hDp <= 0) hDp = 110
-        val largo = wDp >= hDp * 1.3f
 
-        val densita = ctx.resources.displayMetrics.density
-        val riduci = min(1f, 900f / max(wDp, hDp) / densita)
-        val wPx = (wDp * densita * riduci).roundToInt().coerceAtLeast(64)
-        val hPx = (hDp * densita * riduci).roundToInt().coerceAtLeast(64)
-
-        val meteo = MeteoRepo.leggi(ctx)
-        val adesso = ZonedDateTime.now(ROMA)
-        val tempo = meteo?.let { tempoPer(it.codice) }
-        val ventoso = meteo != null && (meteo.vento >= 20 || meteo.raffiche >= 35)
-        val scena = SceneRenderer.disegna(ctx, wPx, hPx, largo, Fascia.per(adesso.hour), tempo?.first, ventoso)
-
-        val rv = RemoteViews(ctx.packageName, if (largo) R.layout.widget_largo else R.layout.widget_alto)
-        rv.setImageViewBitmap(R.id.scena, scena)
-        if (meteo != null && tempo != null) {
-            rv.setTextViewText(R.id.temp, "${meteo.temp.roundToInt()}°")
-            rv.setTextViewText(R.id.cielo, tempo.second)
-            rv.setTextViewText(R.id.dettagli, dettagli(meteo, adesso))
-        } else {
-            rv.setTextViewText(R.id.temp, "--°")
-            rv.setTextViewText(R.id.cielo, "Meteo in arrivo…")
-            rv.setTextViewText(R.id.dettagli, "")
-        }
+        val rv = vista(ctx, wDp, hDp, MeteoRepo.leggi(ctx), ZonedDateTime.now(ROMA))
         val apri = PendingIntent.getActivity(
             ctx, 0,
             Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
@@ -65,7 +43,33 @@ object WidgetUpdater {
         mgr.updateAppWidget(id, rv)
     }
 
-    private fun dettagli(m: Meteo, adesso: ZonedDateTime): String = buildString {
+    /** Il contenuto del widget per un riquadro di wDp × hDp (usato anche dal test delle anteprime). */
+    fun vista(ctx: Context, wDp: Int, hDp: Int, meteo: Meteo?, adesso: ZonedDateTime): RemoteViews {
+        val largo = wDp >= hDp * 1.3f
+        val densita = ctx.resources.displayMetrics.density
+        val riduci = min(1f, 900f / max(wDp, hDp) / densita)
+        val wPx = (wDp * densita * riduci).roundToInt().coerceAtLeast(64)
+        val hPx = (hDp * densita * riduci).roundToInt().coerceAtLeast(64)
+
+        val tempo = meteo?.let { tempoPer(it.codice) }
+        val ventoso = meteo != null && (meteo.vento >= 20 || meteo.raffiche >= 35)
+        val scena = SceneRenderer.disegna(ctx, wPx, hPx, largo, Fascia.per(adesso.hour), tempo?.first, ventoso)
+
+        val rv = RemoteViews(ctx.packageName, if (largo) R.layout.widget_largo else R.layout.widget_alto)
+        rv.setImageViewBitmap(R.id.scena, scena)
+        if (meteo != null && tempo != null) {
+            rv.setTextViewText(R.id.temp, "${meteo.temp.roundToInt()}°")
+            rv.setTextViewText(R.id.cielo, tempo.second)
+            rv.setTextViewText(R.id.dettagli, dettagli(meteo))
+        } else {
+            rv.setTextViewText(R.id.temp, "--°")
+            rv.setTextViewText(R.id.cielo, "Meteo in arrivo…")
+            rv.setTextViewText(R.id.dettagli, "")
+        }
+        return rv
+    }
+
+    private fun dettagli(m: Meteo): String = buildString {
         if (m.min != null && m.max != null) {
             append("min${NBSP}${m.min.roundToInt()}° · max${NBSP}${m.max.roundToInt()}° · ")
         }
