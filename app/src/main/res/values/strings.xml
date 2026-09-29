@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Meteo Meucci</string>
+    <string name="widget_descrizione">Il plesso Meucci con ora e meteo di Acireale</string>
+    <string name="luogo">Meucci · Acireale</string>
+</resources>

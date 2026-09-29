@@ -1,0 +1,51 @@
+name: APK
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+
+      - name: Chiave di firma
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/meteo-meucci.p12"
+
+      - name: Compila
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/meteo-meucci.p12
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: meteo-meucci
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then VN="${GITHUB_REF_NAME#v}"; else VN="0.0.${GITHUB_RUN_NUMBER}-prova"; fi
+          gradle assembleRelease --no-daemon -PversionCode="$GITHUB_RUN_NUMBER" -PversionName="$VN"
+          cp app/build/outputs/apk/release/app-release.apk meteo-meucci.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meteo-meucci
+          path: meteo-meucci.apk
+
+      - name: Pubblica la versione
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" meteo-meucci.apk --title "Meteo Meucci ${GITHUB_REF_NAME}" --notes-file NOTE_VERSIONE.md

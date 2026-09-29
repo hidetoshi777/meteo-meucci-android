@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="TestoWidget">
+        <item name="android:shadowColor">#80000000</item>
+        <item name="android:shadowDy">1</item>
+        <item name="android:shadowRadius">6</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="TestoWidget.Luogo">
+        <item name="android:textColor">#D8E2EC</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.06</item>
+    </style>
+
+    <style name="TestoWidget.Ora">
+        <item name="android:textColor">#FFF6E2</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.04</item>
+    </style>
+
+    <style name="TestoWidget.Data">
+        <item name="android:textColor">#B4C2D0</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.03</item>
+    </style>
+
+    <style name="TestoWidget.Temp">
+        <item name="android:textColor">#FFF6E2</item>
+        <item name="android:fontFamily">sans-serif-black</item>
+    </style>
+
+    <style name="TestoWidget.Cielo">
+        <item name="android:textColor">#F7DCAA</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TestoWidget.Dettagli">
+        <item name="android:textColor">#DBE4EE</item>
+        <item name="android:maxLines">2</item>
+    </style>
+</resources>
