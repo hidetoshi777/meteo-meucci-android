@@ -1,6 +1,6 @@
 Widget per la Home di Android con il plesso Meucci, l'ora e il meteo di Acireale.
 
-**Scarica:** [meteo-meucci.apk](https://github.com/hidetoshi777/meteo-meucci-android/releases/latest/download/meteo-meucci.apk)
+**Pagina di download per i colleghi:** https://hidetoshi777.github.io/Scuola/meteo-meucci/
 
 Per installarlo sul telefono:
 1. Apri il link qui sopra dal telefono e scarica il file.

@@ -2,7 +2,7 @@
 
 Widget per la Home di Android con il plesso Meucci dell'IISS «G. Ferraris» di Acireale: ora, meteo e un cielo che cambia con la giornata.
 
-**Scarica l'app:** [meteo-meucci.apk](https://github.com/hidetoshi777/meteo-meucci-android/releases/latest/download/meteo-meucci.apk)
+**Scarica l'app:** https://hidetoshi777.github.io/Scuola/meteo-meucci/ (pagina con istruzioni; l'APK è servito direttamente dal sito della scuola)
 
 ## Installazione
 
@@ -27,6 +27,12 @@ L'APK lo compila GitHub Actions (`.github/workflows/apk.yml`) a ogni push. Una n
 
 ```
 git tag v1.1 && git push origin v1.1
+```
+
+Dopo il rilascio, copia l'APK anche sul sito della scuola (è il link che usano i colleghi) e aggiorna il numero di versione nella pagina:
+
+```
+gh release download vX.Y -p meteo-meucci.apk -O G:/Scuola/meteo-meucci/meteo-meucci.apk --clobber
 ```
 
 La firma usa la chiave nei secret del repository (`KEYSTORE_B64`, `KEYSTORE_PASSWORD`): deve restare sempre la stessa, altrimenti gli aggiornamenti non si installano sopra la versione vecchia.
