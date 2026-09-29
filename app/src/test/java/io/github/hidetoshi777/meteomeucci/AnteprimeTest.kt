@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.TextClock
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -46,6 +47,10 @@ class AnteprimeTest {
                 if (formato != "4x2" && nome != "giorno_poco_nuvoloso" && nome != "notte_sereno") continue
                 val rv = WidgetUpdater.vista(ctx, wDp, hDp, meteo, adesso)
                 val v = rv.apply(ctx, FrameLayout(ctx))
+                // TextClock scrive l'ora solo quando è agganciato a una finestra (sul launcher sì,
+                // qui no): per l'anteprima gliela diamo a mano, per misurarne l'ingombro
+                v.findViewById<TextClock>(R.id.ora)?.text = "%02d:05".format(ora)
+                v.findViewById<TextClock>(R.id.data)?.text = "martedì 29 settembre"
                 val d = ctx.resources.displayMetrics.density
                 val w = (wDp * d).toInt()
                 val h = (hDp * d).toInt()

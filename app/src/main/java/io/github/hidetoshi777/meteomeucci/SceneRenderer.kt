@@ -112,8 +112,8 @@ object SceneRenderer {
         // L'edificio, con la luce della fascia oraria
         val img = edificio(ctx)
         val rapporto = img.height.toFloat() / img.width
-        val bw = if (largo) min(sw * 1.28f, h * 0.82f / rapporto) else min(w * 1.18f, sh * 0.98f / rapporto)
-        val cx = if (largo) sw * 0.52f else w * 0.5f
+        val bw = if (largo) min(sw * 1.04f, h * 0.8f / rapporto) else min(w * 1.18f, sh * 0.98f / rapporto)
+        val cx = if (largo) sw * 0.49f else w * 0.5f
         val fondo = if (largo) h * 0.96f else sh * 1.03f
         val pe = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         pe.colorFilter = filtroEdificio(fascia, coperto)
@@ -150,8 +150,8 @@ object SceneRenderer {
 
         // Velo scuro sotto il testo, perché resti leggibile su ogni cielo
         if (largo) {
-            p.shader = LinearGradient(w * 0.47f, 0f, w * 0.64f, 0f, Color.TRANSPARENT, t.velo, Shader.TileMode.CLAMP)
-            c.drawRect(w * 0.47f, 0f, w.toFloat(), h.toFloat(), p)
+            p.shader = LinearGradient(w * 0.42f, 0f, w * 0.56f, 0f, Color.TRANSPARENT, t.velo, Shader.TileMode.CLAMP)
+            c.drawRect(w * 0.42f, 0f, w.toFloat(), h.toFloat(), p)
         } else {
             p.shader = LinearGradient(0f, h * 0.48f, 0f, h * 0.66f, Color.TRANSPARENT, t.velo, Shader.TileMode.CLAMP)
             c.drawRect(0f, h * 0.48f, w.toFloat(), h.toFloat(), p)
