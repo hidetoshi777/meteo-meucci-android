@@ -188,7 +188,7 @@ object SceneRenderer {
     ) {
         val img = immagine(ctx, stile.immagine)
         val rapporto = img.height.toFloat() / img.width
-        val filtro = if (stile.notturna) null else filtroScena(fascia)
+        val filtro = filtroScena(if (stile.notturna) Fascia.GIORNO else fascia, stile.contrasto)
 
         // Fondo: l'immagine rimpicciolita e riallargata fa da sfocatura, poi scurita
         val piccola = Bitmap.createScaledBitmap(img, 24, (24 * rapporto).toInt().coerceAtLeast(1), true)
@@ -217,11 +217,27 @@ object SceneRenderer {
         c.restoreToCount(strato)
     }
 
-    /** Per gli stili con sfondo proprio: solo la luce della sera e il buio della notte. */
-    private fun filtroScena(fascia: Fascia): ColorMatrixColorFilter? = when (fascia) {
-        Fascia.SERA -> ColorMatrixColorFilter(ColorMatrix().apply { setScale(0.9f, 0.82f, 0.78f, 1f) })
-        Fascia.NOTTE -> ColorMatrixColorFilter(ColorMatrix().apply { setScale(0.55f, 0.6f, 0.75f, 1f) })
-        else -> null
+    /**
+     * Per gli stili con sfondo proprio: contrasto dello stile (le linee sottili del progetto
+     * tecnico sparirebbero a misura di widget), poi la luce della sera e il buio della notte.
+     */
+    private fun filtroScena(fascia: Fascia, contrasto: Float): ColorMatrixColorFilter? {
+        val m = ColorMatrix()
+        if (contrasto != 1f) {
+            val sposta = 128f * (1f - contrasto)
+            m.set(floatArrayOf(
+                contrasto, 0f, 0f, 0f, sposta,
+                0f, contrasto, 0f, 0f, sposta,
+                0f, 0f, contrasto, 0f, sposta,
+                0f, 0f, 0f, 1f, 0f,
+            ))
+        }
+        when (fascia) {
+            Fascia.SERA -> m.postConcat(ColorMatrix().apply { setScale(0.9f, 0.82f, 0.78f, 1f) })
+            Fascia.NOTTE -> m.postConcat(ColorMatrix().apply { setScale(0.62f, 0.66f, 0.8f, 1f) })
+            else -> if (contrasto == 1f) return null
+        }
+        return ColorMatrixColorFilter(m)
     }
 
     private fun filtroEdificio(fascia: Fascia, coperto: Boolean): ColorMatrixColorFilter {

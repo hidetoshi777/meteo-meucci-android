@@ -14,11 +14,12 @@ enum class Stile(
     val immagine: Int,
     val scenaIntera: Boolean,
     val notturna: Boolean = false,
+    val contrasto: Float = 1f,
 ) {
     ORIGINALE("originale", "Originale", R.drawable.meucci, false),
     ACQUERELLO("acquerello", "Acquerello", R.drawable.meucci_acquerello, false),
     MATTONCINI("mattoncini", "Mattoncini", R.drawable.meucci_mattoncini, false),
-    PROGETTO("progetto", "Progetto tecnico", R.drawable.meucci_progetto, true),
+    PROGETTO("progetto", "Progetto tecnico", R.drawable.meucci_progetto, true, contrasto = 1.45f),
     CYBERPUNK("cyberpunk", "Cyberpunk", R.drawable.meucci_cyberpunk, true, notturna = true);
 
     companion object {
