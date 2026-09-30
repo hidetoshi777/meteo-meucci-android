@@ -44,7 +44,7 @@ class MainActivity : Activity() {
                     if (request.isForMainFrame) view.loadDataWithBaseURL(null, SENZA_RETE, "text/html", "utf-8", null)
                 }
             }
-            loadUrl(PAGINA)
+            loadUrl(pagina())
         }
 
         val barra = LinearLayout(this).apply {
@@ -130,6 +130,7 @@ class MainActivity : Activity() {
                     Stile.salva(this@MainActivity, stile)
                     WidgetUpdater.aggiornaTutti(this@MainActivity)
                     evidenzia()
+                    web.loadUrl(pagina())
                 }
             }
             schede[stile] = scheda
@@ -146,6 +147,12 @@ class MainActivity : Activity() {
             isHorizontalScrollBarEnabled = false
             addView(fila)
         }
+    }
+
+    /** La pagina animata del sito, nello stesso stile del widget. */
+    private fun pagina(): String {
+        val stile = Stile.corrente(this)
+        return if (stile == Stile.ORIGINALE) PAGINA else PAGINA + "?stile=" + stile.chiave
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
