@@ -4,6 +4,7 @@ import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
@@ -14,6 +15,9 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
+import android.widget.FrameLayout
+import android.widget.HorizontalScrollView
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 
@@ -51,6 +55,17 @@ class MainActivity : Activity() {
             setPadding(pad, dp(12), pad, dp(20))
         }
         barra.addView(TextView(this).apply {
+            text = "Stile del widget"
+            setTextColor(Color.rgb(245, 166, 35))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            letterSpacing = 0.06f
+        }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+        barra.addView(sceltaStile(), LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
+            topMargin = dp(8)
+            bottomMargin = dp(12)
+        })
+        barra.addView(TextView(this).apply {
             text = "Per il widget: tieni premuto su uno spazio vuoto della Home → Widget → Meteo Meucci."
             setTextColor(Color.rgb(180, 194, 208))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
@@ -82,6 +97,55 @@ class MainActivity : Activity() {
     override fun onDestroy() {
         web.destroy()
         super.onDestroy()
+    }
+
+    /** Fila di miniature: toccandone una si cambia lo stile di tutti i widget. */
+    private fun sceltaStile(): HorizontalScrollView {
+        val schede = mutableMapOf<Stile, FrameLayout>()
+        fun evidenzia() {
+            val scelto = Stile.corrente(this)
+            schede.forEach { (stile, scheda) ->
+                (scheda.background as GradientDrawable).setStroke(dp(if (stile == scelto) 3 else 1), if (stile == scelto) Color.rgb(245, 166, 35) else Color.rgb(46, 58, 72))
+            }
+        }
+        val fila = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        Stile.entries.forEach { stile ->
+            val colonna = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER_HORIZONTAL
+            }
+            val scheda = FrameLayout(this).apply {
+                // Gli stili scontornati si vedono su un cielo, gli altri hanno il loro sfondo
+                background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(Color.rgb(74, 163, 212), Color.rgb(26, 74, 106))).apply {
+                    cornerRadius = dp(10).toFloat()
+                }
+                clipToOutline = true
+                setPadding(dp(3), dp(3), dp(3), dp(3))
+                addView(ImageView(this@MainActivity).apply {
+                    setImageResource(stile.immagine)
+                    scaleType = if (stile.scenaIntera) ImageView.ScaleType.CENTER_CROP else ImageView.ScaleType.FIT_CENTER
+                    contentDescription = stile.nome
+                }, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+                setOnClickListener {
+                    Stile.salva(this@MainActivity, stile)
+                    WidgetUpdater.aggiornaTutti(this@MainActivity)
+                    evidenzia()
+                }
+            }
+            schede[stile] = scheda
+            colonna.addView(scheda, LinearLayout.LayoutParams(dp(112), dp(66)))
+            colonna.addView(TextView(this).apply {
+                text = stile.nome
+                setTextColor(Color.rgb(220, 228, 238))
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+            }, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { topMargin = dp(4) })
+            fila.addView(colonna, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { marginEnd = dp(10) })
+        }
+        evidenzia()
+        return HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            addView(fila)
+        }
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()

@@ -10,6 +10,8 @@ import android.graphics.ColorMatrixColorFilter
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import android.graphics.RadialGradient
 import android.graphics.RectF
 import android.graphics.Shader
@@ -33,10 +35,10 @@ object SceneRenderer {
         Fascia.NOTTE -> Tavolozza(0xFF1B2850.toInt(), 0xFF090F1D.toInt(), Color.argb(56, 148, 176, 255), Color.argb(209, 8, 12, 28))
     }
 
-    private var edificio: Bitmap? = null
+    private val immagini = HashMap<Int, Bitmap>()
 
-    private fun edificio(ctx: Context): Bitmap =
-        edificio ?: BitmapFactory.decodeResource(ctx.resources, R.drawable.meucci).also { edificio = it }
+    private fun immagine(ctx: Context, id: Int): Bitmap =
+        immagini.getOrPut(id) { BitmapFactory.decodeResource(ctx.resources, id) }
 
     private fun mescola(a: Int, b: Int, t: Float): Int = Color.argb(
         (Color.alpha(a) + (Color.alpha(b) - Color.alpha(a)) * t).toInt(),
@@ -53,6 +55,7 @@ object SceneRenderer {
         fascia: Fascia,
         tempo: Tempo?,
         ventoso: Boolean,
+        stile: Stile = Stile.ORIGINALE,
     ): Bitmap {
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
@@ -64,6 +67,14 @@ object SceneRenderer {
         val sw = if (largo) w * 0.535f else w.toFloat()
         val sh = if (largo) h.toFloat() else h * 0.56f
         val u = min(sh / 9.2f, sw / 12f)
+        val p = Paint(Paint.ANTI_ALIAS_FLAG)
+
+        if (stile.scenaIntera) {
+            scenaIntera(ctx, c, w, h, sw, sh, largo, fascia, stile)
+            meteoSopra(c, w, h, sw, u, tempo, ventoso, p)
+            velo(c, w, h, largo, t, p)
+            return bmp
+        }
 
         // Cielo
         var alto = t.alto
@@ -76,7 +87,6 @@ object SceneRenderer {
             alto = mescola(alto, 0xFF1C2230.toInt(), 0.4f)
             basso = mescola(basso, 0xFF10141C.toInt(), 0.3f)
         }
-        val p = Paint(Paint.ANTI_ALIAS_FLAG)
         p.shader = LinearGradient(w * 0.56f, 0f, w * 0.44f, h * 1.2f, alto, basso, Shader.TileMode.CLAMP)
         c.drawRect(0f, 0f, w.toFloat(), h.toFloat(), p)
 
@@ -110,7 +120,7 @@ object SceneRenderer {
         p.shader = null
 
         // L'edificio, con la luce della fascia oraria
-        val img = edificio(ctx)
+        val img = immagine(ctx, stile.immagine)
         val rapporto = img.height.toFloat() / img.width
         val bw = if (largo) min(sw * 1.04f, h * 0.8f / rapporto) else min(w * 1.18f, sh * 0.98f / rapporto)
         val cx = if (largo) sw * 0.49f else w * 0.5f
@@ -132,6 +142,13 @@ object SceneRenderer {
         val velato = if (coperto) 0.22f else 1f
         if (notte) luna(c, sx, sy, r, velato) else sole(c, sx, sy, r, fascia, velato)
 
+        meteoSopra(c, w, h, sw, u, tempo, ventoso, p)
+        velo(c, w, h, largo, t, p)
+        return bmp
+    }
+
+    /** Vento, pioggia, neve, lampi e nebbia: valgono per tutti gli stili. */
+    private fun meteoSopra(c: Canvas, w: Int, h: Int, sw: Float, u: Float, tempo: Tempo?, ventoso: Boolean, p: Paint) {
         if (ventoso) {
             vento(c, 7.5f * u, 4.1f * u, u, 1f)
             vento(c, 2f * u, 6.15f * u, u, 0.78f)
@@ -147,8 +164,10 @@ object SceneRenderer {
             c.drawRect(0f, 0f, w.toFloat(), h.toFloat(), p)
             p.shader = null
         }
+    }
 
-        // Velo scuro sotto il testo, perché resti leggibile su ogni cielo
+    /** Velo scuro sotto il testo, perché resti leggibile su ogni cielo. */
+    private fun velo(c: Canvas, w: Int, h: Int, largo: Boolean, t: Tavolozza, p: Paint) {
         if (largo) {
             p.shader = LinearGradient(w * 0.42f, 0f, w * 0.56f, 0f, Color.TRANSPARENT, t.velo, Shader.TileMode.CLAMP)
             c.drawRect(w * 0.42f, 0f, w.toFloat(), h.toFloat(), p)
@@ -156,7 +175,53 @@ object SceneRenderer {
             p.shader = LinearGradient(0f, h * 0.48f, 0f, h * 0.66f, Color.TRANSPARENT, t.velo, Shader.TileMode.CLAMP)
             c.drawRect(0f, h * 0.48f, w.toFloat(), h.toFloat(), p)
         }
-        return bmp
+        p.shader = null
+    }
+
+    /**
+     * Stile con sfondo proprio: tutto il riquadro prende la stessa immagine sfocata,
+     * e sopra, nella zona della scena, l'immagine nitida con i bordi sfumati.
+     */
+    private fun scenaIntera(
+        ctx: Context, c: Canvas, w: Int, h: Int, sw: Float, sh: Float,
+        largo: Boolean, fascia: Fascia, stile: Stile,
+    ) {
+        val img = immagine(ctx, stile.immagine)
+        val rapporto = img.height.toFloat() / img.width
+        val filtro = if (stile.notturna) null else filtroScena(fascia)
+
+        // Fondo: l'immagine rimpicciolita e riallargata fa da sfocatura, poi scurita
+        val piccola = Bitmap.createScaledBitmap(img, 24, (24 * rapporto).toInt().coerceAtLeast(1), true)
+        val fondoW = maxOf(w.toFloat(), h / rapporto)
+        val pf = Paint(Paint.FILTER_BITMAP_FLAG).apply { colorFilter = filtro }
+        c.drawBitmap(piccola, null, RectF((w - fondoW) / 2, (h - fondoW * rapporto) / 2, (w + fondoW) / 2, (h + fondoW * rapporto) / 2), pf)
+        c.drawColor(Color.argb(90, 0, 0, 0))
+
+        // L'immagine nitida, larga quanto la zona della scena
+        val bw = if (largo) min(sw * 1.18f, h * 1.02f / rapporto) else min(w * 1.02f, sh * 1.04f / rapporto)
+        val bh = bw * rapporto
+        val cx = if (largo) sw * 0.52f else w * 0.5f
+        val cy = if (largo) h * 0.5f else sh * 0.52f
+        val box = RectF(cx - bw / 2, cy - bh / 2, cx + bw / 2, cy + bh / 2)
+        val strato = c.saveLayer(box, null)
+        c.drawBitmap(img, null, box, Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { colorFilter = filtro })
+        // Bordi sfumati: maschera orizzontale e verticale
+        val maschera = Paint(Paint.ANTI_ALIAS_FLAG).apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN) }
+        val bordo = 0.14f
+        val passi = floatArrayOf(0f, bordo, 1 - bordo, 1f)
+        val colori = intArrayOf(Color.TRANSPARENT, Color.BLACK, Color.BLACK, Color.TRANSPARENT)
+        maschera.shader = LinearGradient(box.left, 0f, box.right, 0f, colori, passi, Shader.TileMode.CLAMP)
+        c.drawRect(box, maschera)
+        maschera.shader = LinearGradient(0f, box.top, 0f, box.bottom, colori, passi, Shader.TileMode.CLAMP)
+        c.drawRect(box, maschera)
+        c.restoreToCount(strato)
+    }
+
+    /** Per gli stili con sfondo proprio: solo la luce della sera e il buio della notte. */
+    private fun filtroScena(fascia: Fascia): ColorMatrixColorFilter? = when (fascia) {
+        Fascia.SERA -> ColorMatrixColorFilter(ColorMatrix().apply { setScale(0.9f, 0.82f, 0.78f, 1f) })
+        Fascia.NOTTE -> ColorMatrixColorFilter(ColorMatrix().apply { setScale(0.55f, 0.6f, 0.75f, 1f) })
+        else -> null
     }
 
     private fun filtroEdificio(fascia: Fascia, coperto: Boolean): ColorMatrixColorFilter {

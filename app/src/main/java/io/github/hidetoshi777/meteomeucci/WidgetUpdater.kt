@@ -44,7 +44,10 @@ object WidgetUpdater {
     }
 
     /** Il contenuto del widget per un riquadro di wDp × hDp (usato anche dal test delle anteprime). */
-    fun vista(ctx: Context, wDp: Int, hDp: Int, meteo: Meteo?, adesso: ZonedDateTime): RemoteViews {
+    fun vista(
+        ctx: Context, wDp: Int, hDp: Int, meteo: Meteo?, adesso: ZonedDateTime,
+        stile: Stile = Stile.corrente(ctx),
+    ): RemoteViews {
         val largo = wDp >= hDp * 1.3f
         val densita = ctx.resources.displayMetrics.density
         val riduci = min(1f, 900f / max(wDp, hDp) / densita)
@@ -53,7 +56,7 @@ object WidgetUpdater {
 
         val tempo = meteo?.let { tempoPer(it.codice) }
         val ventoso = meteo != null && (meteo.vento >= 20 || meteo.raffiche >= 35)
-        val scena = SceneRenderer.disegna(ctx, wPx, hPx, largo, Fascia.per(adesso.hour), tempo?.first, ventoso)
+        val scena = SceneRenderer.disegna(ctx, wPx, hPx, largo, Fascia.per(adesso.hour), tempo?.first, ventoso, stile)
 
         val rv = RemoteViews(ctx.packageName, if (largo) R.layout.widget_largo else R.layout.widget_alto)
         rv.setImageViewBitmap(R.id.scena, scena)
