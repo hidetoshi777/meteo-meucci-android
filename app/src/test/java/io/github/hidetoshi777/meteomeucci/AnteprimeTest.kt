@@ -58,6 +58,15 @@ class AnteprimeTest {
         }
     }
 
+    @Test
+    fun disegnaRiquadroGrande() {
+        // Il riquadro allargato del telefono del Prof (≈ 4×3, quasi quadrato): niente vuoto sotto l'edificio
+        for (stile in listOf(Stile.ORIGINALE, Stile.MATTONCINI, Stile.CYBERPUNK)) {
+            salva("grande_${stile.chiave}", 330, 270, 7, 0, stile)
+            salva("grande_alto_${stile.chiave}", 330, 380, 7, 0, stile)
+        }
+    }
+
     private fun salva(file: String, wDp: Int, hDp: Int, ora: Int, codice: Int, stile: Stile) {
         val meteo = Meteo(23.4, codice, if (codice == 63) 24.0 else 11.0, 20.0, 19.6, 25.1, System.currentTimeMillis())
         val adesso = ZonedDateTime.of(2026, 9, 29, ora, 5, 0, 0, ROMA)

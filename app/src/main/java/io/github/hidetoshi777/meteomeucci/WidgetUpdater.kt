@@ -56,7 +56,7 @@ object WidgetUpdater {
 
         val tempo = meteo?.let { tempoPer(it.codice) }
         val ventoso = meteo != null && (meteo.vento >= 20 || meteo.raffiche >= 35)
-        val scena = SceneRenderer.disegna(ctx, wPx, hPx, largo, Fascia.per(adesso.hour), tempo?.first, ventoso, stile)
+        val scena = SceneRenderer.disegna(ctx, wPx, hPx, largo, Fascia.per(adesso.hour), tempo?.first, ventoso, stile, densita * riduci)
 
         val rv = RemoteViews(ctx.packageName, if (largo) R.layout.widget_largo else R.layout.widget_alto)
         rv.setImageViewBitmap(R.id.scena, scena)

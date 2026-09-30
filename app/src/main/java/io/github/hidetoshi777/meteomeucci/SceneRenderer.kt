@@ -56,6 +56,7 @@ object SceneRenderer {
         tempo: Tempo?,
         ventoso: Boolean,
         stile: Stile = Stile.ORIGINALE,
+        pxDp: Float = h / 110f,
     ): Bitmap {
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
@@ -65,14 +66,14 @@ object SceneRenderer {
 
         // Zona della scena: a sinistra nel riquadro largo, in alto in quello quadrato
         val sw = if (largo) w * 0.535f else w.toFloat()
-        val sh = if (largo) h.toFloat() else h * 0.56f
+        val sh = if (largo) h.toFloat() else maxOf(h * 0.5f, h - ALTEZZA_TESTO_DP * pxDp)
         val u = min(sh / 9.2f, sw / 12f)
         val p = Paint(Paint.ANTI_ALIAS_FLAG)
 
         if (stile.scenaIntera) {
             scenaIntera(ctx, c, w, h, sw, sh, largo, fascia, stile)
             meteoSopra(c, w, h, sw, u, tempo, ventoso, p)
-            velo(c, w, h, largo, t, p)
+            velo(c, w, h, largo, sh, pxDp, t, p)
             return bmp
         }
 
@@ -122,9 +123,9 @@ object SceneRenderer {
         // L'edificio, con la luce della fascia oraria
         val img = immagine(ctx, stile.immagine)
         val rapporto = img.height.toFloat() / img.width
-        val bw = if (largo) min(sw * 1.04f, h * 0.8f / rapporto) else min(w * 1.18f, sh * 0.98f / rapporto)
+        val bw = if (largo) min(sw * 1.04f, h * 0.8f / rapporto) else min(w * 1.02f, sh * 0.9f / rapporto)
         val cx = if (largo) sw * 0.49f else w * 0.5f
-        val fondo = if (largo) h * 0.96f else sh * 1.03f
+        val fondo = if (largo) h * 0.96f else sh + 4 * pxDp
         val pe = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
         pe.colorFilter = filtroEdificio(fascia, coperto)
         c.drawBitmap(img, null, RectF(cx - bw / 2, fondo - bw * rapporto, cx + bw / 2, fondo), pe)
@@ -143,9 +144,12 @@ object SceneRenderer {
         if (notte) luna(c, sx, sy, r, velato) else sole(c, sx, sy, r, fascia, velato)
 
         meteoSopra(c, w, h, sw, u, tempo, ventoso, p)
-        velo(c, w, h, largo, t, p)
+        velo(c, w, h, largo, sh, pxDp, t, p)
         return bmp
     }
+
+    /** Altezza del blocco ora/temperatura/dettagli nel riquadro alto (widget_alto.xml). */
+    private const val ALTEZZA_TESTO_DP = 76f
 
     /** Vento, pioggia, neve, lampi e nebbia: valgono per tutti gli stili. */
     private fun meteoSopra(c: Canvas, w: Int, h: Int, sw: Float, u: Float, tempo: Tempo?, ventoso: Boolean, p: Paint) {
@@ -167,13 +171,14 @@ object SceneRenderer {
     }
 
     /** Velo scuro sotto il testo, perché resti leggibile su ogni cielo. */
-    private fun velo(c: Canvas, w: Int, h: Int, largo: Boolean, t: Tavolozza, p: Paint) {
+    private fun velo(c: Canvas, w: Int, h: Int, largo: Boolean, sh: Float, pxDp: Float, t: Tavolozza, p: Paint) {
         if (largo) {
             p.shader = LinearGradient(w * 0.42f, 0f, w * 0.56f, 0f, Color.TRANSPARENT, t.velo, Shader.TileMode.CLAMP)
             c.drawRect(w * 0.42f, 0f, w.toFloat(), h.toFloat(), p)
         } else {
-            p.shader = LinearGradient(0f, h * 0.48f, 0f, h * 0.66f, Color.TRANSPARENT, t.velo, Shader.TileMode.CLAMP)
-            c.drawRect(0f, h * 0.48f, w.toFloat(), h.toFloat(), p)
+            val da = sh - 14 * pxDp
+            p.shader = LinearGradient(0f, da, 0f, sh + 16 * pxDp, Color.TRANSPARENT, t.velo, Shader.TileMode.CLAMP)
+            c.drawRect(0f, da, w.toFloat(), h.toFloat(), p)
         }
         p.shader = null
     }

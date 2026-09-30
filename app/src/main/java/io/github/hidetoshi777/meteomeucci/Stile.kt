@@ -19,8 +19,11 @@ enum class Stile(
     ORIGINALE("originale", "Originale", R.drawable.meucci, false),
     ACQUERELLO("acquerello", "Acquerello", R.drawable.meucci_acquerello, false),
     MATTONCINI("mattoncini", "Mattoncini", R.drawable.meucci_mattoncini, false),
+    PIXEL("pixel", "Pixel art", R.drawable.meucci_pixel, false),
+    LOWPOLY("lowpoly", "Low-poly", R.drawable.meucci_lowpoly, false),
     PROGETTO("progetto", "Progetto tecnico", R.drawable.meucci_progetto, true, contrasto = 1.45f),
-    CYBERPUNK("cyberpunk", "Cyberpunk", R.drawable.meucci_cyberpunk, true, notturna = true);
+    CYBERPUNK("cyberpunk", "Cyberpunk", R.drawable.meucci_cyberpunk, true, notturna = true),
+    VANGOGH("vangogh", "Notte stellata", R.drawable.meucci_vangogh, true, notturna = true);
 
     companion object {
         private const val PREF = "impostazioni"
